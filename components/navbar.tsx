@@ -1,17 +1,32 @@
 'use client'
 
 import { SignInButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs'
-import { ArrowLeft, ArrowRight, MoreHorizontal, Trello } from 'lucide-react'
+import {
+  ArrowLeft,
+  ArrowRight,
+  Filter,
+  MoreHorizontal,
+  Trello,
+} from 'lucide-react'
 import { Button } from './ui/button'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { Badge } from './ui/badge'
 
 interface Props {
   boardTitle?: string
   onEditBoard?: () => void
+
+  onFilterClick?: () => void
+  filterCount?: number
 }
 
-export default function Navbar({ boardTitle, onEditBoard }: Props) {
+export default function Navbar({
+  boardTitle,
+  filterCount = 0,
+  onEditBoard,
+  onFilterClick,
+}: Props) {
   const { isSignedIn, user } = useUser()
   const pathname = usePathname()
 
@@ -53,7 +68,7 @@ export default function Navbar({ boardTitle, onEditBoard }: Props) {
               </Link>
               <div className='h-4 sm:h-6 w-px bg-gray-300 hidden sm:block' />
               <div className='flex items-center space-x-1 sm:space-x-2 min-w-0'>
-                <Trello className='text-blue-600'/>
+                <Trello className='text-blue-600' />
                 <div className='items-center space-x-1 sm:space-x-2 min-w-0'>
                   <span className='text-lg font-bold text-gray-900 truncate'>
                     {boardTitle}
@@ -70,6 +85,27 @@ export default function Navbar({ boardTitle, onEditBoard }: Props) {
                   )}
                 </div>
               </div>
+            </div>
+
+            <div className='flex items-centerspace-x-2 sm:space-x-4 flex-shrink-0'>
+              {onFilterClick && (
+                <Button
+                  onClick={onFilterClick}
+                  variant='outline'
+                  size='sm'
+                  className={`text-xs sm:text-sm ${
+                    filterCount > 0 ? 'bg-blue-100 border-blue-200' : ''
+                  }`}
+                >
+                  <Filter className='h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2' />
+                  <span className='hidden sm:inline'>Filter</span>
+                  {filterCount > 0 && (
+                    <Badge variant='secondary' className='text-sm ml-1 sm:ml-2'>
+                      {filterCount}
+                    </Badge>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         </div>
