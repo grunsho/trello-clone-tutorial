@@ -44,7 +44,6 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { OutletBoundary } from 'next/dist/lib/framework/boundary-components'
 
 function DroppableColumn({
   column,
@@ -83,7 +82,12 @@ function DroppableColumn({
                 {column.tasks.length}
               </Badge>
             </div>
-            <Button variant='ghost' size='sm' className='flex-shrink-0'>
+            <Button
+              variant='ghost'
+              size='sm'
+              className='flex-shrink-0'
+              onClick={() => onEditColumn(column)}
+            >
               <MoreHorizontalIcon />
             </Button>
           </div>
@@ -292,8 +296,16 @@ function TaskOverlay({ task }: { task: Task }) {
 
 export default function BoardPage() {
   const { id } = useParams<{ id: string }>()
-  const { board, updateBoard, columns, createRealTask, setColumns, moveTask, createColumn } =
-    useBoard(id)
+  const {
+    board,
+    updateBoard,
+    columns,
+    updateColumn,
+    createRealTask,
+    setColumns,
+    moveTask,
+    createColumn,
+  } = useBoard(id)
 
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [newTitle, setNewTitle] = useState('')
@@ -303,6 +315,11 @@ export default function BoardPage() {
   const [isCreatingColumn, setIsCreatingColumn] = useState(false)
   const [isEditingColumn, setIsEditingColumn] = useState(false)
   const [newColumnTitle, setNewColumnTitle] = useState('')
+
+  const [editingColumnTitle, setEditingColumnTitle] = useState('')
+  const [editingColumn, setEditingColumn] = useState<ColumnWithTasks | null>(
+    null
+  )
 
   const [activeTask, setActiveTask] = useState<Task | null>(null)
 
@@ -464,6 +481,24 @@ export default function BoardPage() {
     if (!newColumnTitle) return
 
     await createColumn(newColumnTitle.trim())
+    setNewColumnTitle('')
+    setIsCreatingColumn(false)
+  }
+
+  async function handleUpdateColumn(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editingColumnTitle.trim() || !editingColumn) return
+
+    await updateColumn(editingColumn.id, editingColumnTitle.trim())
+    setEditingColumnTitle('')
+    setIsEditingColumn(false)
+    setEditingColumn(null)
+  }
+
+  async function handleEditColumn(column: ColumnWithTasks) {
+    setIsEditingColumn(true)
+    setEditingColumn(column)
+    setEditingColumnTitle(column.title)
   }
 
   return (
@@ -688,7 +723,7 @@ export default function BoardPage() {
                   key={key}
                   column={column}
                   onCreateTask={handleCreateTask}
-                  onEditColumn={() => {}}
+                  onEditColumn={handleEditColumn}
                 >
                   <SortableContext
                     items={column.tasks.map((task) => task.id)}
@@ -750,6 +785,43 @@ export default function BoardPage() {
                 Cancel
               </Button>
               <Button type='submit'>Create Column</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEditingColumn} onOpenChange={setIsEditingColumn}>
+        <DialogContent className='w-[95vw] max-w-[425px] mx-auto'>
+          <DialogHeader>
+            <DialogTitle>Edit Column</DialogTitle>
+            <p className='text-sm text-gray-600'>
+              Update the title of the column
+            </p>
+          </DialogHeader>
+          <form className='space-y-4' onSubmit={handleUpdateColumn}>
+            <div className='space-y-2'>
+              <Label>Column Title</Label>
+              <Input
+                id='columnTitle'
+                value={editingColumnTitle}
+                onChange={(e) => setEditingColumnTitle(e.target.value)}
+                placeholder='Enter column title...'
+                required
+              />
+            </div>
+            <div className='space-x-2 flex justify-end'>
+              <Button
+                type='button'
+                onClick={() => {
+                  setIsEditingColumn(false)
+                  setEditingColumnTitle('')
+                  setEditingColumn(null)
+                }}
+                variant={'outline'}
+              >
+                Cancel
+              </Button>
+              <Button type='submit'>Edit Column</Button>
             </div>
           </form>
         </DialogContent>
