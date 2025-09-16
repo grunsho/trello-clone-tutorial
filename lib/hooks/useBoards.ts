@@ -59,7 +59,7 @@ export function useBoards() {
 export function useBoard(boardId: string) {
   const { supabase } = useSupabase()
   const [board, setBoard] = useState<Board | null>(null)
-  const [columns, setColumns] = useState<Column[]>([])
+  const [columns, setColumns] = useState<ColumnWithTasks[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -138,41 +138,47 @@ export function useBoard(boardId: string) {
         err instanceof Error ? err.message : 'Failed to create the task.'
       )
     }
+  }
 
-    async function moveTask(
-      taskId: string,
-      newColumnId: string,
-      newOrder: number
-    ) {
-      try {
-        await taskService.moveTask(supabase, taskId, newColumnId, newOrder)
+  async function moveTask(
+    taskId: string,
+    newColumnId: string,
+    newOrder: number
+  ) {
+    try {
+      await taskService.moveTask(supabase!, taskId, newColumnId, newOrder)
 
-        setColumns((prev) => {
-          const newColumn = [...prev]
+      setColumns((prev) => {
+        const newColumns = [...prev]
 
-          // Find and remove the task from the old column
-          let taskToMove: Task | null = null
-          for (const col of newColumn) {
-            const taskIndex = col.tasks.findIndex((task) => task.id === taskId)
-            if (taskIndex !== -1) {
-              taskToMove = col.tasks[taskIndex]
-              col.tasks.splice(taskIndex, 1)
-              break
-            }
+        // Find and remove the task from the old column
+        let taskToMove: Task | null = null
+        for (const col of newColumns) {
+          const taskIndex = col.tasks.findIndex((task) => task.id === taskId)
+          if (taskIndex !== -1) {
+            taskToMove = col.tasks[taskIndex]
+            col.tasks.splice(taskIndex, 1)
+            break
           }
+        }
 
-          if (taskToMove) {
-            // Add task to new column
-            const targetColumn = newColumn.find(
-              (col) => col.id === newColumnId
-            )
-            if (targetColumn) {
-              targetColumn.tasks.splice(newOrder, 0, taskToMove)
-            }
+        if (taskToMove) {
+          // Add task to new column
+          const targetColumn = newColumns.find((col) => col.id === newColumnId)
+          if (targetColumn) {
+            targetColumn.tasks.splice(newOrder, 0, taskToMove)
           }
-        })
-      } catch {}
+        }
+
+        return newColumns
+      })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to move task.')
     }
+  }
+
+  async function createColumn(title: string) {
+
   }
 
   return {
@@ -184,5 +190,6 @@ export function useBoard(boardId: string) {
     createRealTask,
     setColumns,
     moveTask,
+    createColumn,
   }
 }
