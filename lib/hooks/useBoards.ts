@@ -138,6 +138,41 @@ export function useBoard(boardId: string) {
         err instanceof Error ? err.message : 'Failed to create the task.'
       )
     }
+
+    async function moveTask(
+      taskId: string,
+      newColumnId: string,
+      newOrder: number
+    ) {
+      try {
+        await taskService.moveTask(supabase, taskId, newColumnId, newOrder)
+
+        setColumns((prev) => {
+          const newColumn = [...prev]
+
+          // Find and remove the task from the old column
+          let taskToMove: Task | null = null
+          for (const col of newColumn) {
+            const taskIndex = col.tasks.findIndex((task) => task.id === taskId)
+            if (taskIndex !== -1) {
+              taskToMove = col.tasks[taskIndex]
+              col.tasks.splice(taskIndex, 1)
+              break
+            }
+          }
+
+          if (taskToMove) {
+            // Add task to new column
+            const targetColumn = newColumn.find(
+              (col) => col.id === newColumnId
+            )
+            if (targetColumn) {
+              targetColumn.tasks.splice(newOrder, 0, taskToMove)
+            }
+          }
+        })
+      } catch {}
+    }
   }
 
   return {
@@ -147,5 +182,7 @@ export function useBoard(boardId: string) {
     error,
     updateBoard,
     createRealTask,
+    setColumns,
+    moveTask,
   }
 }
