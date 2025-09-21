@@ -795,7 +795,6 @@ export default function BoardPage() {
             </Dialog>
           </div>
           {/* Board Columns */}
-
           <DndContext
             sensors={sensors}
             collisionDetection={rectIntersection}
